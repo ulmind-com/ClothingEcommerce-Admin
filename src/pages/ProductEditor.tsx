@@ -52,12 +52,12 @@ export default function ProductEditor() {
   const save = async () => {
     setErr("");
     if (!f.title || !f.price) { setErr("Title and needed price are required"); return; }
+    const { rating, review_count, sold_count, ...rest } = f as any;
     const body = {
-      ...f,
+      ...rest,
       category_id: f.category_id || null,
       mrp: Number(f.mrp), price: Number(f.price), discount_pct: Number(f.discount_pct),
       stock: Number(f.stock), low_stock_threshold: Number(f.low_stock_threshold),
-      rating: Number(f.rating), review_count: Number(f.review_count), sold_count: Number(f.sold_count),
     };
     setSaving(true);
     try {
@@ -167,11 +167,10 @@ export default function ProductEditor() {
         </div>
         <label>Sizes (comma separated)</label>
         <input value={f.sizes.join(", ")} onChange={(e) => set("sizes", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} placeholder="S, M, L" />
-        <div className="row">
-          <div><label>Rating (0-5)</label><input type="number" step="0.1" value={f.rating} onChange={(e) => set("rating", e.target.value)} /></div>
-          <div><label>Review count</label><input type="number" value={f.review_count} onChange={(e) => set("review_count", e.target.value)} /></div>
-          <div><label>Units sold</label><input type="number" value={f.sold_count} onChange={(e) => set("sold_count", e.target.value)} /></div>
-        </div>
+        <p className="muted" style={{ marginTop: 16 }}>
+          ⭐ Rating & reviews are collected from delivered customers. 📦 Units sold is
+          counted automatically when orders are delivered. These update on their own.
+        </p>
         <label className="flex" style={{ marginTop: 16 }}>
           <input type="checkbox" style={{ width: "auto" }} checked={f.is_active} onChange={(e) => set("is_active", e.target.checked)} />
           Visible in store
