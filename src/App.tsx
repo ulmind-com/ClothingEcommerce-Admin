@@ -1,0 +1,38 @@
+import { Navigate, Route, Routes } from "react-router-dom";
+import { isAdmin } from "./auth";
+import Layout from "./components/Layout";
+import Categories from "./pages/Categories";
+import Dashboard from "./pages/Dashboard";
+import Login from "./pages/Login";
+import Orders from "./pages/Orders";
+import ProductEditor from "./pages/ProductEditor";
+import Products from "./pages/Products";
+import Settings from "./pages/Settings";
+
+function Guard({ children }: { children: React.ReactNode }) {
+  return isAdmin() ? <>{children}</> : <Navigate to="/login" replace />;
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route
+        element={
+          <Guard>
+            <Layout />
+          </Guard>
+        }
+      >
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/products" element={<Products />} />
+        <Route path="/products/new" element={<ProductEditor />} />
+        <Route path="/products/:id" element={<ProductEditor />} />
+        <Route path="/categories" element={<Categories />} />
+        <Route path="/orders" element={<Orders />} />
+        <Route path="/settings" element={<Settings />} />
+      </Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
