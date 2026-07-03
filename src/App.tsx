@@ -1,7 +1,9 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { isAdmin } from "./auth";
 import Layout from "./components/Layout";
+import Banners from "./pages/Banners";
 import Categories from "./pages/Categories";
+import Coupons from "./pages/Coupons";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Orders from "./pages/Orders";
@@ -29,6 +31,8 @@ export default function App() {
         <Route path="/products/new" element={<ProductEditor />} />
         <Route path="/products/:id" element={<ProductEditor />} />
         <Route path="/categories" element={<Categories />} />
+        <Route path="/banners" element={<Banners />} />
+        <Route path="/coupons" element={<Coupons />} />
         <Route path="/orders" element={<Orders />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
