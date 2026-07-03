@@ -1,12 +1,112 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
+
+declare const L: any; // Leaflet loaded via CDN
 
 export default function Settings() {
   const [s, setS] = useState<any>(null);
   const [saved, setSaved] = useState(false);
   const [err, setErr] = useState("");
+  const [mapSearch, setMapSearch] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searching, setSearching] = useState(false);
+
+  const mapRef = useRef<HTMLDivElement>(null);
+  const leafletMap = useRef<any>(null);
+  const markerRef = useRef<any>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => { api.get("/settings").then(setS).catch((e) => setErr(e.message)); }, []);
+
+  // Initialize Leaflet map once settings are loaded
+  useEffect(() => {
+    if (!s || !mapRef.current || leafletMap.current) return;
+
+    const lat = s.shop.lat || 22.0667;
+    const lng = s.shop.lng || 88.0698;
+
+    const map = L.map(mapRef.current).setView([lat, lng], 14);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19,
+    }).addTo(map);
+
+    const marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+    markerRef.current = marker;
+
+    // When marker is dragged, update lat/lng
+    marker.on("dragend", () => {
+      const pos = marker.getLatLng();
+      setS((p: any) => ({
+        ...p,
+        shop: { ...p.shop, lat: parseFloat(pos.lat.toFixed(6)), lng: parseFloat(pos.lng.toFixed(6)) },
+      }));
+    });
+
+    // Click on map to move marker
+    map.on("click", (e: any) => {
+      marker.setLatLng(e.latlng);
+      map.panTo(e.latlng);
+      setS((p: any) => ({
+        ...p,
+        shop: { ...p.shop, lat: parseFloat(e.latlng.lat.toFixed(6)), lng: parseFloat(e.latlng.lng.toFixed(6)) },
+      }));
+    });
+
+    leafletMap.current = map;
+
+    // Fix map rendering issues
+    setTimeout(() => map.invalidateSize(), 200);
+  }, [s]);
+
+  // Update marker when lat/lng change from manual input
+  useEffect(() => {
+    if (!markerRef.current || !leafletMap.current || !s) return;
+    const lat = Number(s.shop.lat);
+    const lng = Number(s.shop.lng);
+    if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+      markerRef.current.setLatLng([lat, lng]);
+      leafletMap.current.setView([lat, lng], leafletMap.current.getZoom());
+    }
+  }, [s?.shop?.lat, s?.shop?.lng]);
+
+  // Search places using Nominatim (OpenStreetMap free geocoding)
+  const handleMapSearch = (query: string) => {
+    setMapSearch(query);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!query.trim()) { setSearchResults([]); return; }
+
+    debounceRef.current = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`
+        );
+        const data = await res.json();
+        setSearchResults(data);
+      } catch {
+        setSearchResults([]);
+      } finally {
+        setSearching(false);
+      }
+    }, 400);
+  };
+
+  const selectPlace = (place: any) => {
+    const lat = parseFloat(parseFloat(place.lat).toFixed(6));
+    const lng = parseFloat(parseFloat(place.lon).toFixed(6));
+    setS((p: any) => ({
+      ...p,
+      shop: { ...p.shop, lat, lng, address: place.display_name },
+    }));
+    if (markerRef.current && leafletMap.current) {
+      markerRef.current.setLatLng([lat, lng]);
+      leafletMap.current.setView([lat, lng], 16);
+    }
+    setMapSearch("");
+    setSearchResults([]);
+  };
+
   if (!s) return <p className="muted">Loading…</p>;
 
   const set = (k: string, v: any) => setS((p: any) => ({ ...p, [k]: v }));
@@ -15,7 +115,16 @@ export default function Settings() {
 
   const useMyLocation = () => {
     navigator.geolocation.getCurrentPosition(
-      (pos) => { setShop("lat", pos.coords.latitude); setShop("lng", pos.coords.longitude); },
+      (pos) => {
+        const lat = parseFloat(pos.coords.latitude.toFixed(6));
+        const lng = parseFloat(pos.coords.longitude.toFixed(6));
+        setShop("lat", lat);
+        setShop("lng", lng);
+        if (markerRef.current && leafletMap.current) {
+          markerRef.current.setLatLng([lat, lng]);
+          leafletMap.current.setView([lat, lng], 16);
+        }
+      },
       () => alert("Could not get location")
     );
   };
@@ -25,7 +134,11 @@ export default function Settings() {
     try {
       const body = {
         currency: s.currency, currency_code: s.currency_code, tax_rate: Number(s.tax_rate),
-        shop: { ...s.shop, lat: s.shop.lat === "" ? null : Number(s.shop.lat), lng: s.shop.lng === "" ? null : Number(s.shop.lng) },
+        shop: {
+          ...s.shop,
+          lat: s.shop.lat === "" ? null : Number(s.shop.lat),
+          lng: s.shop.lng === "" ? null : Number(s.shop.lng),
+        },
         delivery: {
           free_radius_km: Number(s.delivery.free_radius_km), per_km_rate: Number(s.delivery.per_km_rate),
           base_fee: Number(s.delivery.base_fee), free_above: Number(s.delivery.free_above),
@@ -52,16 +165,65 @@ export default function Settings() {
 
       <div className="card">
         <div className="between"><h3 style={{ margin: 0 }}>Shop location</h3>
-          <button className="btn ghost sm" onClick={useMyLocation}>Use my current location</button></div>
-        <label>Shop name</label>
-        <input value={s.shop.name || ""} onChange={(e) => setShop("name", e.target.value)} />
+          <button className="btn ghost sm" onClick={useMyLocation}>📍 Use my current location</button></div>
+
+        <div className="row">
+          <div style={{ flex: 2 }}><label>Shop name</label><input value={s.shop.name || ""} onChange={(e) => setShop("name", e.target.value)} /></div>
+          <div style={{ flex: 1 }}><label>Phone number</label><input type="tel" value={s.shop.phone || ""} placeholder="+91 XXXXX XXXXX" onChange={(e) => setShop("phone", e.target.value)} /></div>
+        </div>
+
         <label>Address</label>
         <input value={s.shop.address || ""} onChange={(e) => setShop("address", e.target.value)} />
-        <div className="row">
+
+        {/* Map with search */}
+        <div style={{ marginTop: 16, position: "relative" }}>
+          <label>Search location on map</label>
+          <input
+            value={mapSearch}
+            onChange={(e) => handleMapSearch(e.target.value)}
+            placeholder="Search for a place, city, or address..."
+            style={{ marginBottom: 0 }}
+          />
+          {/* Search results dropdown */}
+          {searchResults.length > 0 && (
+            <div style={{
+              position: "absolute", top: "100%", left: 0, right: 0, zIndex: 1000,
+              background: "#1e1e2e", border: "1px solid #333", borderRadius: 8,
+              maxHeight: 200, overflowY: "auto", boxShadow: "0 8px 24px rgba(0,0,0,.4)"
+            }}>
+              {searchResults.map((p: any, i: number) => (
+                <div
+                  key={i}
+                  onClick={() => selectPlace(p)}
+                  style={{
+                    padding: "10px 14px", cursor: "pointer", borderBottom: "1px solid #2a2a3a",
+                    fontSize: 13, color: "#ccc",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "#2a2a3a")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                >
+                  📍 {p.display_name}
+                </div>
+              ))}
+            </div>
+          )}
+          {searching && <p className="muted" style={{ margin: "4px 0" }}>Searching...</p>}
+        </div>
+
+        {/* Leaflet map */}
+        <div
+          ref={mapRef}
+          style={{
+            width: "100%", height: 350, borderRadius: 12, marginTop: 12,
+            border: "2px solid #333", overflow: "hidden",
+          }}
+        />
+
+        <div className="row" style={{ marginTop: 12 }}>
           <div><label>Latitude</label><input type="number" value={s.shop.lat ?? ""} onChange={(e) => setShop("lat", e.target.value)} /></div>
           <div><label>Longitude</label><input type="number" value={s.shop.lng ?? ""} onChange={(e) => setShop("lng", e.target.value)} /></div>
         </div>
-        <p className="muted">Delivery fee is auto-calculated from the distance between this shop location and the customer's delivery address.</p>
+        <p className="muted">Click on the map or drag the marker to set location. Lat/Lng update automatically.</p>
       </div>
 
       <div className="card">
