@@ -9,6 +9,7 @@ import Login from "./pages/Login";
 import Orders from "./pages/Orders";
 import ProductEditor from "./pages/ProductEditor";
 import Products from "./pages/Products";
+import Reviews from "./pages/Reviews";
 import Settings from "./pages/Settings";
 
 function Guard({ children }: { children: React.ReactNode }) {
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="/banners" element={<Banners />} />
         <Route path="/coupons" element={<Coupons />} />
         <Route path="/orders" element={<Orders />} />
+        <Route path="/reviews" element={<Reviews />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

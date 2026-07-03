@@ -8,6 +8,7 @@ const links = [
   { to: "/banners", label: "Banners / Offers" },
   { to: "/coupons", label: "Coupons" },
   { to: "/orders", label: "Orders" },
+  { to: "/reviews", label: "Reviews" },
   { to: "/settings", label: "Settings" },
 ];
 

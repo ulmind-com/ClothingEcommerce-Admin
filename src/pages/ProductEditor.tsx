@@ -168,8 +168,9 @@ export default function ProductEditor() {
         <label>Sizes (comma separated)</label>
         <input value={f.sizes.join(", ")} onChange={(e) => set("sizes", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} placeholder="S, M, L" />
         <p className="muted" style={{ marginTop: 16 }}>
-          ⭐ Rating & reviews are collected from delivered customers. 📦 Units sold is
+          Rating & reviews are collected from delivered customers. Units sold is
           counted automatically when orders are delivered. These update on their own.
+          See the Reviews tab for all customer feedback.
         </p>
         <label className="flex" style={{ marginTop: 16 }}>
           <input type="checkbox" style={{ width: "auto" }} checked={f.is_active} onChange={(e) => set("is_active", e.target.checked)} />
