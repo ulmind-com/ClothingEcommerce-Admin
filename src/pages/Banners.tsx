@@ -6,6 +6,7 @@ const empty = { image: "", title: "", subtitle: "", code: "", active: true, orde
 export default function Banners() {
   const [items, setItems] = useState<any[]>([]);
   const [f, setF] = useState({ ...empty });
+  const [editId, setEditId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [err, setErr] = useState("");
   const file = useRef<HTMLInputElement>(null);
@@ -14,6 +15,7 @@ export default function Banners() {
   useEffect(() => { load(); }, []);
 
   const set = (k: string, v: any) => setF((p) => ({ ...p, [k]: v }));
+  const reset = () => { setF({ ...empty }); setEditId(null); setErr(""); };
 
   const upload = async (files: FileList | null) => {
     if (!files?.[0]) return;
@@ -22,22 +24,35 @@ export default function Banners() {
     catch (e: any) { setErr(e.message); } finally { setUploading(false); }
   };
 
-  const add = async () => {
+  const save = async () => {
     setErr("");
     if (!f.image) { setErr("Please upload a banner image"); return; }
-    await api.post("/banners", { ...f, order: Number(f.order) });
-    setF({ ...empty }); load();
+    const body = { ...f, order: Number(f.order) };
+    if (editId) await api.patch(`/banners/${editId}`, body);
+    else await api.post("/banners", body);
+    reset(); load();
   };
+
+  const edit = (b: any) => {
+    setF({ image: b.image, title: b.title || "", subtitle: b.subtitle || "", code: b.code || "", active: b.active, order: b.order ?? 0 });
+    setEditId(b.id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const setOrder = async (b: any, order: number) => { await api.patch(`/banners/${b.id}`, { order }); load(); };
   const toggle = async (b: any) => { await api.patch(`/banners/${b.id}`, { active: !b.active }); load(); };
-  const del = async (id: string) => { if (confirm("Delete banner?")) { await api.del(`/banners/${id}`); load(); } };
+  const del = async (id: string) => { if (confirm("Delete banner?")) { await api.del(`/banners/${id}`); if (editId === id) reset(); load(); } };
 
   return (
     <>
       <h1>Banners / Offers</h1>
 
       <div className="card">
-        <h3 style={{ marginTop: 0 }}>Add banner</h3>
-        <p className="muted">Recommended image size: <b>1000 × 420 px</b> (≈ 2.4:1). It's shown in the home offer carousel.</p>
+        <div className="between">
+          <h3 style={{ marginTop: 0 }}>{editId ? "Edit banner" : "Add banner"}</h3>
+          {editId && <button className="btn ghost sm" onClick={reset}>Cancel edit</button>}
+        </div>
+        <p className="muted">Recommended image size: <b>1000 × 420 px</b> (≈ 2.4:1). Banners show in the home carousel sorted by <b>Order</b> (low → high).</p>
         <div className="imgs">
           {f.image
             ? <div className="imgbox"><img style={{ width: 220, height: 92 }} src={f.image} /><button className="x" onClick={() => set("image", "")}>×</button></div>
@@ -50,14 +65,14 @@ export default function Banners() {
         </div>
         <div className="row">
           <div><label>Coupon code to show (optional)</label><input value={f.code} onChange={(e) => set("code", e.target.value.toUpperCase())} placeholder="WELCOMEOFFER" /></div>
-          <div><label>Order</label><input type="number" value={f.order} onChange={(e) => set("order", e.target.value)} /></div>
+          <div><label>Order (lower shows first)</label><input type="number" value={f.order} onChange={(e) => set("order", e.target.value)} /></div>
         </div>
         {err && <div className="err">{err}</div>}
-        <button className="btn" style={{ marginTop: 14 }} onClick={add}>Add banner</button>
+        <button className="btn" style={{ marginTop: 14 }} onClick={save}>{editId ? "Save changes" : "Add banner"}</button>
       </div>
 
       {items.map((b) => (
-        <div className="card" key={b.id}>
+        <div className="card" key={b.id} style={editId === b.id ? { borderColor: "var(--orange)" } : {}}>
           <div className="between">
             <div className="flex">
               <img style={{ width: 160, height: 66, objectFit: "cover", borderRadius: 8 }} src={b.image} />
@@ -67,6 +82,9 @@ export default function Banners() {
               </div>
             </div>
             <div className="flex">
+              <label style={{ margin: 0 }} className="muted">Order</label>
+              <input type="number" value={b.order ?? 0} style={{ width: 70 }} onChange={(e) => setOrder(b, Number(e.target.value))} />
+              <button className="btn ghost sm" onClick={() => edit(b)}>Edit</button>
               <button className="btn ghost sm" onClick={() => toggle(b)}>{b.active ? "Active ✓" : "Hidden"}</button>
               <button className="btn danger sm" onClick={() => del(b.id)}>Delete</button>
             </div>

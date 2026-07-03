@@ -6,33 +6,51 @@ const empty = { code: "", type: "percent", value: 10, min_order: 0, max_discount
 export default function Coupons() {
   const [items, setItems] = useState<any[]>([]);
   const [f, setF] = useState({ ...empty });
+  const [editId, setEditId] = useState<string | null>(null);
   const [err, setErr] = useState("");
 
   const load = () => api.get("/coupons").then(setItems).catch(() => {});
   useEffect(() => { load(); }, []);
   const set = (k: string, v: any) => setF((p) => ({ ...p, [k]: v }));
+  const reset = () => { setF({ ...empty }); setEditId(null); setErr(""); };
 
-  const add = async () => {
+  const save = async () => {
     setErr("");
     if (!f.code.trim()) { setErr("Coupon code required"); return; }
+    const body = {
+      ...f, code: f.code.toUpperCase(), value: Number(f.value),
+      min_order: Number(f.min_order), max_discount: Number(f.max_discount),
+      valid_from: f.valid_from || null, valid_until: f.valid_until || null,
+    };
     try {
-      await api.post("/coupons", {
-        ...f, code: f.code.toUpperCase(), value: Number(f.value),
-        min_order: Number(f.min_order), max_discount: Number(f.max_discount),
-        valid_from: f.valid_from || null, valid_until: f.valid_until || null,
-      });
-      setF({ ...empty }); load();
+      if (editId) await api.patch(`/coupons/${editId}`, body);
+      else await api.post("/coupons", body);
+      reset(); load();
     } catch (e: any) { setErr(e.message); }
   };
+
+  const edit = (c: any) => {
+    setF({
+      code: c.code, type: c.type, value: c.value, min_order: c.min_order || 0,
+      max_discount: c.max_discount || 0, active: c.active,
+      valid_from: c.valid_from || "", valid_until: c.valid_until || "", description: c.description || "",
+    });
+    setEditId(c.id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const toggle = async (c: any) => { await api.patch(`/coupons/${c.id}`, { active: !c.active }); load(); };
-  const del = async (id: string) => { if (confirm("Delete coupon?")) { await api.del(`/coupons/${id}`); load(); } };
+  const del = async (id: string) => { if (confirm("Delete coupon?")) { await api.del(`/coupons/${id}`); if (editId === id) reset(); load(); } };
 
   return (
     <>
       <h1>Coupons</h1>
 
       <div className="card">
-        <h3 style={{ marginTop: 0 }}>Create coupon</h3>
+        <div className="between">
+          <h3 style={{ marginTop: 0 }}>{editId ? "Edit coupon" : "Create coupon"}</h3>
+          {editId && <button className="btn ghost sm" onClick={reset}>Cancel edit</button>}
+        </div>
         <div className="row">
           <div><label>Code</label><input value={f.code} onChange={(e) => set("code", e.target.value.toUpperCase())} placeholder="WELCOMEOFFER" /></div>
           <div>
@@ -56,21 +74,24 @@ export default function Coupons() {
         <label>Description</label>
         <input value={f.description} onChange={(e) => set("description", e.target.value)} placeholder="10% off up to ₹150" />
         {err && <div className="err">{err}</div>}
-        <button className="btn" style={{ marginTop: 14 }} onClick={add}>Create coupon</button>
+        <button className="btn" style={{ marginTop: 14 }} onClick={save}>{editId ? "Save changes" : "Create coupon"}</button>
       </div>
 
       <div className="card">
         <table>
-          <thead><tr><th>Code</th><th>Discount</th><th>Min order</th><th>Expiry</th><th>Status</th><th></th></tr></thead>
+          <thead><tr><th>Code</th><th>Discount</th><th>Min order</th><th>Window</th><th>Status</th><th></th></tr></thead>
           <tbody>
             {items.map((c) => (
-              <tr key={c.id}>
+              <tr key={c.id} style={editId === c.id ? { background: "#fff6f0" } : {}}>
                 <td><b>{c.code}</b><div className="muted">{c.description}</div></td>
                 <td>{c.type === "percent" ? `${c.value}%${c.max_discount ? ` (max ₹${c.max_discount})` : ""}` : `₹${c.value}`}</td>
                 <td>{c.min_order ? `₹${c.min_order}` : "—"}</td>
-                <td>{c.valid_until || "—"}</td>
+                <td className="muted">{c.valid_from ? new Date(c.valid_from).toLocaleDateString() : "—"} → {c.valid_until ? new Date(c.valid_until).toLocaleDateString() : "∞"}</td>
                 <td><button className="btn ghost sm" onClick={() => toggle(c)}>{c.active ? "Active ✓" : "Inactive"}</button></td>
-                <td><button className="btn danger sm" onClick={() => del(c.id)}>Delete</button></td>
+                <td className="flex">
+                  <button className="btn ghost sm" onClick={() => edit(c)}>Edit</button>
+                  <button className="btn danger sm" onClick={() => del(c.id)}>Delete</button>
+                </td>
               </tr>
             ))}
             {items.length === 0 && <tr><td colSpan={6} className="muted">No coupons yet.</td></tr>}
