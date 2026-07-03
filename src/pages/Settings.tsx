@@ -238,8 +238,8 @@ export default function Settings() {
           <div><label>Max serviceable distance (km)</label><input type="number" value={s.delivery.max_service_km} onChange={(e) => setDel("max_service_km", e.target.value)} /></div>
         </div>
         <p className="muted">
-          Example: within {s.delivery.free_radius_km} km → free. Beyond that → ₹{s.delivery.base_fee} + ₹{s.delivery.per_km_rate}/km.
-          Orders above ₹{s.delivery.free_above} ship free. No delivery beyond {s.delivery.max_service_km} km.
+          Example: within {s.delivery.free_radius_km} km → free. Beyond that → ₹{s.delivery.base_fee} + ₹{s.delivery.per_km_rate} × total km
+          (e.g. 10 km → ₹{Number(s.delivery.base_fee) + Number(s.delivery.per_km_rate) * 10}). Orders above ₹{s.delivery.free_above} ship free. No delivery beyond {s.delivery.max_service_km} km.
         </p>
       </div>
 
