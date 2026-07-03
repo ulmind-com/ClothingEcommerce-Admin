@@ -14,7 +14,7 @@ export default function Settings() {
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMap = useRef<any>(null);
   const markerRef = useRef<any>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<any>(null);
 
   useEffect(() => { api.get("/settings").then(setS).catch((e) => setErr(e.message)); }, []);
 
