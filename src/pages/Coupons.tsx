@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 
-const empty = { code: "", type: "percent", value: 10, min_order: 0, max_discount: 0, active: true, valid_until: "", description: "" };
+const empty = { code: "", type: "percent", value: 10, min_order: 0, max_discount: 0, active: true, valid_from: "", valid_until: "", description: "" };
 
 export default function Coupons() {
   const [items, setItems] = useState<any[]>([]);
@@ -19,7 +19,7 @@ export default function Coupons() {
       await api.post("/coupons", {
         ...f, code: f.code.toUpperCase(), value: Number(f.value),
         min_order: Number(f.min_order), max_discount: Number(f.max_discount),
-        valid_until: f.valid_until || null,
+        valid_from: f.valid_from || null, valid_until: f.valid_until || null,
       });
       setF({ ...empty }); load();
     } catch (e: any) { setErr(e.message); }
@@ -47,8 +47,12 @@ export default function Coupons() {
         <div className="row">
           <div><label>Min order ₹ (0 = none)</label><input type="number" value={f.min_order} onChange={(e) => set("min_order", e.target.value)} /></div>
           <div><label>Max discount ₹ (percent cap, 0 = none)</label><input type="number" value={f.max_discount} onChange={(e) => set("max_discount", e.target.value)} disabled={f.type === "flat"} /></div>
-          <div><label>Valid until (optional)</label><input type="date" value={f.valid_until} onChange={(e) => set("valid_until", e.target.value)} /></div>
         </div>
+        <div className="row">
+          <div><label>Show from (optional)</label><input type="datetime-local" value={f.valid_from} onChange={(e) => set("valid_from", e.target.value)} /></div>
+          <div><label>Auto-expire at (optional)</label><input type="datetime-local" value={f.valid_until} onChange={(e) => set("valid_until", e.target.value)} /></div>
+        </div>
+        <p className="muted">Leave times empty for an always-on coupon. Otherwise it appears in the app's Offers only within this window and hides automatically after.</p>
         <label>Description</label>
         <input value={f.description} onChange={(e) => set("description", e.target.value)} placeholder="10% off up to ₹150" />
         {err && <div className="err">{err}</div>}
