@@ -13,7 +13,7 @@ type Section = {
   active: boolean;
 };
 
-type Prod = { id: string; title: string; brand?: string; images?: string[]; category_id?: string | null };
+type Prod = { id: string; title: string; brand?: string; images?: string[]; category_id?: string | null; is_active?: boolean };
 type Cat = { id: string; name: string };
 
 const BLANK: Section = {
@@ -158,9 +158,12 @@ export default function HomeLayout() {
                 <td><span className="pill" style={{ background: "#f1eee9" }}>{TYPE_LABEL[s.type] || s.type}</span></td>
                 <td>{s.layout === "rail" ? "Side-by-side" : "Grid"}</td>
                 <td className="muted">
-                  {s.type === "manual" ? `${s.product_ids.length} picked`
-                    : s.type === "category" ? "category"
-                    : "auto"}
+                  {s.type === "manual" ? (
+                    (() => {
+                      const hidden = s.product_ids.filter((id) => products.find((p) => p.id === id)?.is_active === false).length;
+                      return `${s.product_ids.length} picked${hidden ? ` · ${hidden} hidden` : ""}`;
+                    })()
+                  ) : s.type === "category" ? "category" : "auto"}
                 </td>
                 <td>
                   <label className="flex" style={{ gap: 6 }}>
@@ -241,6 +244,9 @@ export default function HomeLayout() {
                       <input type="checkbox" style={{ width: "auto" }} checked={sel} onChange={() => toggleProduct(p.id)} />
                       <img className="thumb" src={p.images?.[0] || "https://via.placeholder.com/40"} style={{ width: 34, height: 34 }} />
                       <span style={{ flex: 1 }}>{p.title}{p.brand ? <span className="muted"> · {p.brand}</span> : null}</span>
+                      {p.is_active === false && (
+                        <span className="pill" style={{ background: "#FDECEC", color: "#E23744" }}>Inactive · hidden on store</span>
+                      )}
                       {sel && <span className="pill" style={{ background: "#F26A21", color: "#fff" }}>#{pos}</span>}
                     </label>
                   );
