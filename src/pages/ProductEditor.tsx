@@ -2,7 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api, uploadImage } from "../api";
 
-type Variant = { name: string; hex: string; images: string[]; stock: number };
+type SizeStock = { size: string; price: number | null; mrp: number | null; stock: number };
+type Variant = {
+  name: string; hex: string; images: string[]; stock: number;
+  price: number | null; mrp: number | null; sizes: SizeStock[];
+};
+
+const numOrNull = (v: string): number | null => (v === "" ? null : Number(v));
 
 const empty = {
   title: "", description: "", brand: "", category_id: "",
@@ -44,10 +50,18 @@ export default function ProductEditor() {
     } catch (e: any) { setErr(e.message); } finally { setUploading(false); }
   };
 
-  const addVariant = () => set("colors", [...f.colors, { name: "", hex: "#000000", images: [], stock: 0 }]);
+  const addVariant = () =>
+    set("colors", [...f.colors, { name: "", hex: "#000000", images: [], stock: 0, price: null, mrp: null, sizes: [] }]);
   const updVariant = (i: number, k: string, v: any) =>
     set("colors", f.colors.map((c, idx) => (idx === i ? { ...c, [k]: v } : c)));
   const rmVariant = (i: number) => set("colors", f.colors.filter((_, idx) => idx !== i));
+
+  const addSize = (i: number) =>
+    updVariant(i, "sizes", [...(f.colors[i].sizes || []), { size: "", price: null, mrp: null, stock: 0 }]);
+  const updSize = (i: number, si: number, k: string, v: any) =>
+    updVariant(i, "sizes", (f.colors[i].sizes || []).map((s, idx) => (idx === si ? { ...s, [k]: v } : s)));
+  const rmSize = (i: number, si: number) =>
+    updVariant(i, "sizes", (f.colors[i].sizes || []).filter((_, idx) => idx !== si));
 
   const save = async () => {
     setErr("");
@@ -138,9 +152,32 @@ export default function ProductEditor() {
             <div className="row">
               <div><label>Colour name</label><input value={c.name} onChange={(e) => updVariant(i, "name", e.target.value)} placeholder="Orange" /></div>
               <div><label>Swatch</label><input type="color" value={c.hex} onChange={(e) => updVariant(i, "hex", e.target.value)} style={{ height: 44 }} /></div>
-              <div><label>Stock</label><input type="number" value={c.stock} onChange={(e) => updVariant(i, "stock", Number(e.target.value))} /></div>
+              <div><label>Colour stock (used if no sizes below)</label><input type="number" value={c.stock} onChange={(e) => updVariant(i, "stock", Number(e.target.value))} /></div>
             </div>
-            <label>Images for this colour</label>
+            <div className="row">
+              <div><label>Colour price (optional — overrides base)</label><input type="number" value={c.price ?? ""} placeholder={`base ₹${f.price}`} onChange={(e) => updVariant(i, "price", numOrNull(e.target.value))} /></div>
+              <div><label>Colour MRP (optional)</label><input type="number" value={c.mrp ?? ""} placeholder={`base ₹${f.mrp}`} onChange={(e) => updVariant(i, "mrp", numOrNull(e.target.value))} /></div>
+            </div>
+
+            {/* Per-size price + stock within this colour */}
+            <div className="between" style={{ marginTop: 12 }}>
+              <label style={{ margin: 0 }}>Sizes for this colour (each can have its own price + stock)</label>
+              <button className="btn ghost sm" onClick={() => addSize(i)}>+ Add size</button>
+            </div>
+            {(c.sizes || []).length === 0 && (
+              <p className="muted" style={{ marginTop: 6 }}>No per-size rows — this colour uses the colour stock/price above.</p>
+            )}
+            {(c.sizes || []).map((s, si) => (
+              <div className="row" key={si} style={{ alignItems: "end" }}>
+                <div><label>Size</label><input value={s.size} placeholder="M" onChange={(e) => updSize(i, si, "size", e.target.value)} /></div>
+                <div><label>Price (optional)</label><input type="number" value={s.price ?? ""} placeholder={`₹${c.price ?? f.price}`} onChange={(e) => updSize(i, si, "price", numOrNull(e.target.value))} /></div>
+                <div><label>MRP (optional)</label><input type="number" value={s.mrp ?? ""} placeholder={`₹${c.mrp ?? f.mrp}`} onChange={(e) => updSize(i, si, "mrp", numOrNull(e.target.value))} /></div>
+                <div><label>Stock</label><input type="number" value={s.stock} onChange={(e) => updSize(i, si, "stock", Number(e.target.value))} /></div>
+                <div style={{ flex: "0 0 auto" }}><label>&nbsp;</label><button className="btn danger sm" onClick={() => rmSize(i, si)}>Remove</button></div>
+              </div>
+            ))}
+
+            <label style={{ marginTop: 12 }}>Images for this colour</label>
             <div className="imgs">
               {c.images.map((u, idx) => (
                 <div className="imgbox" key={u + idx}>
