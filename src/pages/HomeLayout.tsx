@@ -42,7 +42,7 @@ export default function HomeLayout() {
 
   useEffect(() => {
     load();
-    api.get<Prod[]>("/products?limit=200&admin=true").then(setProducts).catch(() => {});
+    api.get<Prod[]>("/products?limit=100&admin=true").then(setProducts).catch(() => {});
     api.get<any[]>("/categories/tree").then((tree) => {
       const flat: Cat[] = [];
       const d: Record<string, string[]> = {};
