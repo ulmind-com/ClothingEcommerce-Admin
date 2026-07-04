@@ -40,9 +40,20 @@ export default function HomeLayout() {
   const load = () =>
     api.get<Section[]>("/home-sections").then(setSections).catch(() => {});
 
+  // Fetch the whole catalogue (the API caps a page at 100, so page through it).
+  const loadAllProducts = async () => {
+    const all: Prod[] = [];
+    for (let skip = 0; skip < 10000; skip += 100) {
+      const page = await api.get<Prod[]>(`/products?limit=100&skip=${skip}&admin=true`);
+      all.push(...page);
+      if (page.length < 100) break;
+    }
+    setProducts(all);
+  };
+
   useEffect(() => {
     load();
-    api.get<Prod[]>("/products?limit=100&admin=true").then(setProducts).catch(() => {});
+    loadAllProducts().catch(() => {});
     api.get<any[]>("/categories/tree").then((tree) => {
       const flat: Cat[] = [];
       const d: Record<string, string[]> = {};
