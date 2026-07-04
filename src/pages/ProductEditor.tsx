@@ -27,6 +27,7 @@ export default function ProductEditor() {
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const genFile = useRef<HTMLInputElement>(null);
 
   const set = (k: string, v: any) => setF((p) => ({ ...p, [k]: v }));
@@ -145,8 +146,52 @@ export default function ProductEditor() {
 
       {/* Colour variants */}
       <div className="card">
-        <div className="between"><h3 style={{ margin: 0 }}>Colour variants (colour-wise images + stock)</h3>
-          <button className="btn ghost sm" onClick={addVariant}>+ Add colour</button></div>
+        <div className="between">
+          <h3 style={{ margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+            Colour variants (colour-wise price, discount, stock)
+            <button
+              type="button"
+              title="How pricing & inheritance works"
+              onClick={() => setShowHelp((v) => !v)}
+              style={{ width: 22, height: 22, borderRadius: "50%", border: "1.5px solid var(--orange)", color: "var(--orange)", background: "transparent", fontStyle: "italic", fontWeight: 700, cursor: "pointer", lineHeight: 1 }}
+            >i</button>
+          </h3>
+          <button className="btn ghost sm" onClick={addVariant}>+ Add colour</button>
+        </div>
+
+        {showHelp && (
+          <div style={{ background: "#FFF7F0", border: "1px solid #F3D8C4", borderRadius: 12, padding: 16, marginBottom: 16, fontSize: 13.5, lineHeight: 1.6 }}>
+            <b>How pricing works — 3 levels, each overrides the one above</b>
+            <ol style={{ margin: "8px 0 8px 18px", padding: 0 }}>
+              <li><b>Base</b> (the Pricing card above): the product's default price, MRP &amp; discount.</li>
+              <li><b>Colour</b>: optional overrides for a whole colour.</li>
+              <li><b>Size</b>: optional overrides for one size inside a colour.</li>
+            </ol>
+            <p style={{ margin: "8px 0" }}>
+              Fallback for <i>every</i> field is <b>Size → Colour → Base</b>. Leaving a box blank
+              (or <b>“inherit”</b>) means “use the level above”. The greyed <span className="muted">₹placeholder</span> shows
+              what will be inherited.
+            </p>
+            <ul style={{ margin: "8px 0 8px 18px", padding: 0 }}>
+              <li><b>Price / MRP</b> — blank = inherit; type a number to override just that colour/size.</li>
+              <li><b>Disc % + On</b> — extra discount. <b>On = price</b> cuts the selling price; <b>On = mrp</b> cuts from the MRP; <b>inherit</b> = use colour’s, else base’s.</li>
+              <li><b>Stock</b> — if a colour has size rows, each size’s stock is used (Colour stock is ignored). No size rows → the Colour stock is used.</li>
+            </ul>
+            <p style={{ margin: "8px 0" }}>
+              Customer price for a colour+size = resolve price/MRP/discount, then apply the discount.
+              The product card shows the cheapest combo as <b>“from ₹X”</b>.
+            </p>
+            <div style={{ marginTop: 10, padding: "10px 12px", background: "#fff", border: "1px solid var(--border)", borderRadius: 10 }}>
+              <b>Example — this dress</b> <span className="muted">(base ₹2799, MRP ₹3499)</span>:
+              <ul style={{ margin: "6px 0 0 18px", padding: 0 }}>
+                <li><b>Black / XS</b>: size Disc 10% on price → <b>₹2519</b> (28% off vs MRP)</li>
+                <li><b>Black / S, M</b>: all inherit → <b>₹2799</b> (20% off)</li>
+                <li><b>Black / L</b>: size Price ₹3079 → <b>₹3079</b> (12% off)</li>
+                <li><b>Red</b> (whole colour Price ₹2939): XS/S/M → <b>₹2939</b>; L overridden → <b>₹3079</b></li>
+              </ul>
+            </div>
+          </div>
+        )}
         {f.colors.length === 0 && <p className="muted">No colour variants. Add one so customers can pick a colour and see its images.</p>}
         {f.colors.map((c, i) => (
           <div className="variant" key={i}>
