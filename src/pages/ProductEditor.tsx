@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api, uploadImage } from "../api";
 
-type SizeStock = { size: string; price: number | null; mrp: number | null; stock: number };
+type SizeStock = { size: string; price: number | null; mrp: number | null; discount_pct: number | null; discount_on: string | null; stock: number };
 type Variant = {
   name: string; hex: string; images: string[]; stock: number;
-  price: number | null; mrp: number | null; sizes: SizeStock[];
+  price: number | null; mrp: number | null; discount_pct: number | null; discount_on: string | null;
+  sizes: SizeStock[];
 };
 
 const numOrNull = (v: string): number | null => (v === "" ? null : Number(v));
@@ -51,13 +52,13 @@ export default function ProductEditor() {
   };
 
   const addVariant = () =>
-    set("colors", [...f.colors, { name: "", hex: "#000000", images: [], stock: 0, price: null, mrp: null, sizes: [] }]);
+    set("colors", [...f.colors, { name: "", hex: "#000000", images: [], stock: 0, price: null, mrp: null, discount_pct: null, discount_on: null, sizes: [] }]);
   const updVariant = (i: number, k: string, v: any) =>
     set("colors", f.colors.map((c, idx) => (idx === i ? { ...c, [k]: v } : c)));
   const rmVariant = (i: number) => set("colors", f.colors.filter((_, idx) => idx !== i));
 
   const addSize = (i: number) =>
-    updVariant(i, "sizes", [...(f.colors[i].sizes || []), { size: "", price: null, mrp: null, stock: 0 }]);
+    updVariant(i, "sizes", [...(f.colors[i].sizes || []), { size: "", price: null, mrp: null, discount_pct: null, discount_on: null, stock: 0 }]);
   const updSize = (i: number, si: number, k: string, v: any) =>
     updVariant(i, "sizes", (f.colors[i].sizes || []).map((s, idx) => (idx === si ? { ...s, [k]: v } : s)));
   const rmSize = (i: number, si: number) =>
@@ -158,6 +159,17 @@ export default function ProductEditor() {
               <div><label>Colour price (optional — overrides base)</label><input type="number" value={c.price ?? ""} placeholder={`base ₹${f.price}`} onChange={(e) => updVariant(i, "price", numOrNull(e.target.value))} /></div>
               <div><label>Colour MRP (optional)</label><input type="number" value={c.mrp ?? ""} placeholder={`base ₹${f.mrp}`} onChange={(e) => updVariant(i, "mrp", numOrNull(e.target.value))} /></div>
             </div>
+            <div className="row">
+              <div><label>Colour discount % (optional)</label><input type="number" value={c.discount_pct ?? ""} placeholder={`base ${f.discount_pct || 0}%`} onChange={(e) => updVariant(i, "discount_pct", numOrNull(e.target.value))} /></div>
+              <div>
+                <label>Discount applies on</label>
+                <select value={c.discount_on ?? ""} onChange={(e) => updVariant(i, "discount_on", e.target.value || null)}>
+                  <option value="">— inherit base —</option>
+                  <option value="price">Needed price</option>
+                  <option value="mrp">Actual price (MRP)</option>
+                </select>
+              </div>
+            </div>
 
             {/* Per-size price + stock within this colour */}
             <div className="between" style={{ marginTop: 12 }}>
@@ -168,10 +180,19 @@ export default function ProductEditor() {
               <p className="muted" style={{ marginTop: 6 }}>No per-size rows — this colour uses the colour stock/price above.</p>
             )}
             {(c.sizes || []).map((s, si) => (
-              <div className="row" key={si} style={{ alignItems: "end" }}>
+              <div className="row" key={si} style={{ alignItems: "end", flexWrap: "wrap" }}>
                 <div><label>Size</label><input value={s.size} placeholder="M" onChange={(e) => updSize(i, si, "size", e.target.value)} /></div>
-                <div><label>Price (optional)</label><input type="number" value={s.price ?? ""} placeholder={`₹${c.price ?? f.price}`} onChange={(e) => updSize(i, si, "price", numOrNull(e.target.value))} /></div>
-                <div><label>MRP (optional)</label><input type="number" value={s.mrp ?? ""} placeholder={`₹${c.mrp ?? f.mrp}`} onChange={(e) => updSize(i, si, "mrp", numOrNull(e.target.value))} /></div>
+                <div><label>Price</label><input type="number" value={s.price ?? ""} placeholder={`₹${c.price ?? f.price}`} onChange={(e) => updSize(i, si, "price", numOrNull(e.target.value))} /></div>
+                <div><label>MRP</label><input type="number" value={s.mrp ?? ""} placeholder={`₹${c.mrp ?? f.mrp}`} onChange={(e) => updSize(i, si, "mrp", numOrNull(e.target.value))} /></div>
+                <div><label>Disc %</label><input type="number" value={s.discount_pct ?? ""} placeholder={`${c.discount_pct ?? f.discount_pct ?? 0}`} onChange={(e) => updSize(i, si, "discount_pct", numOrNull(e.target.value))} /></div>
+                <div>
+                  <label>On</label>
+                  <select value={s.discount_on ?? ""} onChange={(e) => updSize(i, si, "discount_on", e.target.value || null)}>
+                    <option value="">inherit</option>
+                    <option value="price">price</option>
+                    <option value="mrp">mrp</option>
+                  </select>
+                </div>
                 <div><label>Stock</label><input type="number" value={s.stock} onChange={(e) => updSize(i, si, "stock", Number(e.target.value))} /></div>
                 <div style={{ flex: "0 0 auto" }}><label>&nbsp;</label><button className="btn danger sm" onClick={() => rmSize(i, si)}>Remove</button></div>
               </div>
