@@ -13,7 +13,11 @@ type Section = {
   active: boolean;
 };
 
-type Prod = { id: string; title: string; brand?: string; images?: string[]; category_id?: string | null; is_active?: boolean };
+type Prod = {
+  id: string; title: string; brand?: string; images?: string[];
+  category_id?: string | null; is_active?: boolean;
+  total_stock?: number; in_stock?: boolean; low_stock?: boolean;
+};
 type Cat = { id: string; name: string };
 
 const BLANK: Section = {
@@ -244,8 +248,15 @@ export default function HomeLayout() {
                       <input type="checkbox" style={{ width: "auto" }} checked={sel} onChange={() => toggleProduct(p.id)} />
                       <img className="thumb" src={p.images?.[0] || "https://via.placeholder.com/40"} style={{ width: 34, height: 34 }} />
                       <span style={{ flex: 1 }}>{p.title}{p.brand ? <span className="muted"> · {p.brand}</span> : null}</span>
+                      {p.in_stock === false ? (
+                        <span className="pill" style={{ background: "#FDECEC", color: "#E23744" }}>Out of stock</span>
+                      ) : (
+                        <span className="pill" style={{ background: p.low_stock ? "#FFF1E8" : "#EAF7EE", color: p.low_stock ? "#F26A21" : "#2F8F46" }}>
+                          {p.total_stock ?? 0} in stock
+                        </span>
+                      )}
                       {p.is_active === false && (
-                        <span className="pill" style={{ background: "#FDECEC", color: "#E23744" }}>Inactive · hidden on store</span>
+                        <span className="pill" style={{ background: "#FDECEC", color: "#E23744" }}>Inactive · hidden</span>
                       )}
                       {sel && <span className="pill" style={{ background: "#F26A21", color: "#fff" }}>#{pos}</span>}
                     </label>
