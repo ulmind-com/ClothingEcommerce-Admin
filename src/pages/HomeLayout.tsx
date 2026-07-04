@@ -13,7 +13,7 @@ type Section = {
   active: boolean;
 };
 
-type Prod = { id: string; title: string; brand?: string; images?: string[] };
+type Prod = { id: string; title: string; brand?: string; images?: string[]; category_id?: string | null };
 type Cat = { id: string; name: string };
 
 const BLANK: Section = {
@@ -33,6 +33,8 @@ export default function HomeLayout() {
   const [cats, setCats] = useState<Cat[]>([]);
   const [editing, setEditing] = useState<Section | null>(null);
   const [search, setSearch] = useState("");
+  const [catFilter, setCatFilter] = useState("");
+  const [desc, setDesc] = useState<Record<string, string[]>>({}); // category -> itself + children
   const [saving, setSaving] = useState(false);
 
   const load = () =>
@@ -43,11 +45,18 @@ export default function HomeLayout() {
     api.get<Prod[]>("/products?limit=200&admin=true").then(setProducts).catch(() => {});
     api.get<any[]>("/categories/tree").then((tree) => {
       const flat: Cat[] = [];
+      const d: Record<string, string[]> = {};
       (tree || []).forEach((t) => {
         flat.push({ id: t.id, name: t.name });
-        (t.children || []).forEach((c: any) => flat.push({ id: c.id, name: `${t.name} › ${c.name}` }));
+        const childIds = (t.children || []).map((c: any) => c.id);
+        d[t.id] = [t.id, ...childIds]; // picking a parent includes its sub-categories
+        (t.children || []).forEach((c: any) => {
+          flat.push({ id: c.id, name: `${t.name} › ${c.name}` });
+          d[c.id] = [c.id];
+        });
       });
       setCats(flat);
+      setDesc(d);
     }).catch(() => {});
   }, []);
 
@@ -85,6 +94,7 @@ export default function HomeLayout() {
       else await api.post("/home-sections", { ...body, order: sections.length });
       setEditing(null);
       setSearch("");
+      setCatFilter("");
       load();
     } catch (e: any) {
       alert(e.message);
@@ -104,9 +114,11 @@ export default function HomeLayout() {
     });
   };
 
-  const filtered = products.filter((p) =>
-    (p.title + " " + (p.brand || "")).toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = products.filter((p) => {
+    const inCat = !catFilter || (desc[catFilter] || [catFilter]).includes(p.category_id || "");
+    const inSearch = (p.title + " " + (p.brand || "")).toLowerCase().includes(search.toLowerCase());
+    return inCat && inSearch;
+  });
 
   return (
     <>
@@ -198,7 +210,17 @@ export default function HomeLayout() {
           {editing.type === "manual" && (
             <div style={{ marginTop: 12 }}>
               <label>Products ({editing.product_ids.length} selected — shown in the order you pick)</label>
-              <input placeholder="Search products…" value={search} onChange={(e) => setSearch(e.target.value)} />
+              <div className="row">
+                <div style={{ flex: 1 }}>
+                  <select value={catFilter} onChange={(e) => setCatFilter(e.target.value)}>
+                    <option value="">All categories</option>
+                    {cats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <input placeholder="Search products…" value={search} onChange={(e) => setSearch(e.target.value)} />
+                </div>
+              </div>
               <div style={{ maxHeight: 280, overflow: "auto", marginTop: 10, border: "1px solid var(--border)", borderRadius: 10 }}>
                 {filtered.map((p) => {
                   const sel = editing.product_ids.includes(p.id);
@@ -230,7 +252,7 @@ export default function HomeLayout() {
 
           <div className="flex" style={{ marginTop: 14 }}>
             <button className="btn" onClick={save} disabled={saving}>{saving ? "Saving…" : "Save section"}</button>
-            <button className="btn ghost" onClick={() => { setEditing(null); setSearch(""); }}>Cancel</button>
+            <button className="btn ghost" onClick={() => { setEditing(null); setSearch(""); setCatFilter(""); }}>Cancel</button>
           </div>
         </div>
       )}
