@@ -133,7 +133,7 @@ export default function Settings() {
     setErr(""); setSaved(false);
     try {
       const body = {
-        currency: s.currency, currency_code: s.currency_code, tax_rate: Number(s.tax_rate),
+        currency: s.currency, currency_code: s.currency_code,
         shop: {
           ...s.shop,
           lat: s.shop.lat === "" ? null : Number(s.shop.lat),
@@ -159,8 +159,8 @@ export default function Settings() {
         <div className="row">
           <div><label>Currency symbol</label><input value={s.currency} onChange={(e) => set("currency", e.target.value)} /></div>
           <div><label>Currency code</label><input value={s.currency_code} onChange={(e) => set("currency_code", e.target.value)} /></div>
-          <div><label>Default GST rate (0.05 = 5%, fallback)</label><input type="number" step="0.01" value={s.tax_rate} onChange={(e) => set("tax_rate", e.target.value)} /></div>
         </div>
+        <p className="muted" style={{ marginTop: 4 }}>GST is set per product (CGST / SGST / IGST) in the product editor.</p>
       </div>
 
       <div className="card">
@@ -174,7 +174,7 @@ export default function Settings() {
 
         <div className="row">
           <div style={{ flex: 1 }}>
-            <label>Shop state (for GST — same-state = CGST+SGST, else IGST)</label>
+            <label>State</label>
             <input value={s.shop.state || ""} placeholder="West Bengal" onChange={(e) => setShop("state", e.target.value)} />
           </div>
           <div style={{ flex: 1 }} />

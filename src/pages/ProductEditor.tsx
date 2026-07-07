@@ -13,7 +13,8 @@ const numOrNull = (v: string): number | null => (v === "" ? null : Number(v));
 
 const empty = {
   title: "", description: "", brand: "", category_id: "",
-  mrp: 0, price: 0, discount_pct: 0, discount_on: "price", tax_pct: "" as number | string,
+  mrp: 0, price: 0, discount_pct: 0, discount_on: "price",
+  cgst: "" as number | string, sgst: "" as number | string, igst: "" as number | string,
   images: [] as string[], colors: [] as Variant[], sizes: [] as string[],
   stock: 0, low_stock_threshold: 5,
   rating: 0, review_count: 0, sold_count: 0, is_active: true,
@@ -73,7 +74,9 @@ export default function ProductEditor() {
       ...rest,
       category_id: f.category_id || null,
       mrp: Number(f.mrp), price: Number(f.price), discount_pct: Number(f.discount_pct),
-      tax_pct: f.tax_pct === "" ? null : Number(f.tax_pct),
+      cgst: f.cgst === "" ? null : Number(f.cgst),
+      sgst: f.sgst === "" ? null : Number(f.sgst),
+      igst: f.igst === "" ? null : Number(f.igst),
       stock: Number(f.stock), low_stock_threshold: Number(f.low_stock_threshold),
     };
     setSaving(true);
@@ -122,18 +125,17 @@ export default function ProductEditor() {
             </select>
           </div>
         </div>
+        <label style={{ marginTop: 8 }}>GST for this product (same-state = CGST + SGST · other state = IGST)</label>
         <div className="row">
-          <div>
-            <label>GST % for this product</label>
-            <input type="number" value={f.tax_pct} onChange={(e) => set("tax_pct", e.target.value)} placeholder="e.g. 5, 12, 18 — blank = store default" />
-          </div>
-          <div />
+          <div><label>CGST %</label><input type="number" value={f.cgst} onChange={(e) => set("cgst", e.target.value)} placeholder="e.g. 2.5, 6" /></div>
+          <div><label>SGST %</label><input type="number" value={f.sgst} onChange={(e) => set("sgst", e.target.value)} placeholder="e.g. 2.5, 6" /></div>
+          <div><label>IGST %</label><input type="number" value={f.igst} onChange={(e) => set("igst", e.target.value)} placeholder="e.g. 5, 12" /></div>
         </div>
         <p className="muted" style={{ marginTop: 14 }}>
           Customer sees: <span style={{ textDecoration: "line-through" }}>₹{f.mrp}</span>{" "}
           <b style={{ color: "#f26a21", fontSize: 16 }}>₹{final}</b>{" "}
           {off > 0 && <span style={{ color: "#2fae5f" }}>({off}% off)</span>}
-          {" · "}GST {f.tax_pct === "" ? "store default" : `${f.tax_pct}%`} (added at checkout)
+          {" · "}GST added at checkout: CGST {f.cgst || 0}% + SGST {f.sgst || 0}% (same state), or IGST {f.igst || 0}% (other state)
         </p>
       </div>
 
