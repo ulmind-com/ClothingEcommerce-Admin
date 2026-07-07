@@ -159,7 +159,7 @@ export default function Settings() {
         <div className="row">
           <div><label>Currency symbol</label><input value={s.currency} onChange={(e) => set("currency", e.target.value)} /></div>
           <div><label>Currency code</label><input value={s.currency_code} onChange={(e) => set("currency_code", e.target.value)} /></div>
-          <div><label>Tax rate (e.g. 0.05 = 5%)</label><input type="number" step="0.01" value={s.tax_rate} onChange={(e) => set("tax_rate", e.target.value)} /></div>
+          <div><label>Default GST rate (0.05 = 5%, fallback)</label><input type="number" step="0.01" value={s.tax_rate} onChange={(e) => set("tax_rate", e.target.value)} /></div>
         </div>
       </div>
 
@@ -170,6 +170,14 @@ export default function Settings() {
         <div className="row">
           <div style={{ flex: 2 }}><label>Shop name</label><input value={s.shop.name || ""} onChange={(e) => setShop("name", e.target.value)} /></div>
           <div style={{ flex: 1 }}><label>Phone number</label><input type="tel" value={s.shop.phone || ""} placeholder="+91 XXXXX XXXXX" onChange={(e) => setShop("phone", e.target.value)} /></div>
+        </div>
+
+        <div className="row">
+          <div style={{ flex: 1 }}>
+            <label>Shop state (for GST — same-state = CGST+SGST, else IGST)</label>
+            <input value={s.shop.state || ""} placeholder="West Bengal" onChange={(e) => setShop("state", e.target.value)} />
+          </div>
+          <div style={{ flex: 1 }} />
         </div>
 
         <label>Address</label>
