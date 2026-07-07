@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 
-const empty = { code: "", type: "percent", value: 10, min_order: 0, max_discount: 0, active: true, valid_from: "", valid_until: "", description: "" };
+const empty = { code: "", type: "percent", value: 10, min_order: 0, max_discount: 0, active: true, first_order_only: false, valid_from: "", valid_until: "", description: "" };
 
 export default function Coupons() {
   const [items, setItems] = useState<any[]>([]);
@@ -32,7 +32,7 @@ export default function Coupons() {
   const edit = (c: any) => {
     setF({
       code: c.code, type: c.type, value: c.value, min_order: c.min_order || 0,
-      max_discount: c.max_discount || 0, active: c.active,
+      max_discount: c.max_discount || 0, active: c.active, first_order_only: !!c.first_order_only,
       valid_from: c.valid_from || "", valid_until: c.valid_until || "", description: c.description || "",
     });
     setEditId(c.id);
@@ -71,6 +71,11 @@ export default function Coupons() {
           <div><label>Auto-expire at (optional)</label><input type="datetime-local" value={f.valid_until} onChange={(e) => set("valid_until", e.target.value)} /></div>
         </div>
         <p className="muted">Leave times empty for an always-on coupon. Otherwise it appears in the app's Offers only within this window and hides automatically after.</p>
+        <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+          <input type="checkbox" checked={f.first_order_only} onChange={(e) => set("first_order_only", e.target.checked)} style={{ width: "auto", margin: 0 }} />
+          First-order only (usable only on a customer's first order)
+        </label>
+        <p className="muted">When on, this coupon shows and applies only for customers who haven't ordered yet. It joins the auto-apply pool, so the best offer still wins if the customer has a better one.</p>
         <label>Description</label>
         <input value={f.description} onChange={(e) => set("description", e.target.value)} placeholder="10% off up to ₹150" />
         {err && <div className="err">{err}</div>}
@@ -83,7 +88,11 @@ export default function Coupons() {
           <tbody>
             {items.map((c) => (
               <tr key={c.id} style={editId === c.id ? { background: "#fff6f0" } : {}}>
-                <td><b>{c.code}</b><div className="muted">{c.description}</div></td>
+                <td>
+                  <b>{c.code}</b>
+                  {c.first_order_only && <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 600, color: "#F26A21", background: "#fff3eb", padding: "2px 7px", borderRadius: 6 }}>1st order</span>}
+                  <div className="muted">{c.description}</div>
+                </td>
                 <td>{c.type === "percent" ? `${c.value}%${c.max_discount ? ` (max ₹${c.max_discount})` : ""}` : `₹${c.value}`}</td>
                 <td>{c.min_order ? `₹${c.min_order}` : "—"}</td>
                 <td className="muted">{c.valid_from ? new Date(c.valid_from).toLocaleDateString() : "—"} → {c.valid_until ? new Date(c.valid_until).toLocaleDateString() : "∞"}</td>

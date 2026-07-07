@@ -112,9 +112,6 @@ export default function Settings() {
   const set = (k: string, v: any) => setS((p: any) => ({ ...p, [k]: v }));
   const setShop = (k: string, v: any) => setS((p: any) => ({ ...p, shop: { ...p.shop, [k]: v } }));
   const setDel = (k: string, v: any) => setS((p: any) => ({ ...p, delivery: { ...p.delivery, [k]: v } }));
-  const setFO = (k: string, v: any) =>
-    setS((p: any) => ({ ...p, first_order: { ...(p.first_order || {}), [k]: v } }));
-  const fo = s.first_order || {};
 
   const useMyLocation = () => {
     navigator.geolocation.getCurrentPosition(
@@ -147,13 +144,6 @@ export default function Settings() {
           base_fee: Number(s.delivery.base_fee), free_above: Number(s.delivery.free_above),
           max_service_km: Number(s.delivery.max_service_km), slabs: s.delivery.slabs || [],
         },
-        first_order: {
-          enabled: !!fo.enabled,
-          type: fo.type || "percent",
-          value: Number(fo.value || 0),
-          min_order: Number(fo.min_order || 0),
-          max_discount: Number(fo.max_discount || 0),
-        },
       };
       const res = await api.put("/settings", body);
       setS(res); setSaved(true);
@@ -171,44 +161,6 @@ export default function Settings() {
           <div><label>Currency code</label><input value={s.currency_code} onChange={(e) => set("currency_code", e.target.value)} /></div>
         </div>
         <p className="muted" style={{ marginTop: 4 }}>GST is set per product (CGST / SGST / IGST) in the product editor.</p>
-      </div>
-
-      <div className="card">
-        <div className="between">
-          <h3 style={{ margin: 0 }}>First-order discount</h3>
-          <label style={{ display: "flex", alignItems: "center", gap: 8, margin: 0, cursor: "pointer" }}>
-            <input type="checkbox" checked={!!fo.enabled} onChange={(e) => setFO("enabled", e.target.checked)} style={{ width: "auto", margin: 0 }} />
-            {fo.enabled ? "Enabled" : "Disabled"}
-          </label>
-        </div>
-        <p className="muted" style={{ marginTop: 4 }}>
-          A one-time discount applied automatically on a new customer's very first order.
-          Works independently of coupons — you can turn it on/off or change the value anytime.
-        </p>
-        {fo.enabled && (
-          <>
-            <div className="row">
-              <div>
-                <label>Discount type</label>
-                <select value={fo.type || "percent"} onChange={(e) => setFO("type", e.target.value)}>
-                  <option value="percent">Percent (%)</option>
-                  <option value="flat">Flat (₹)</option>
-                </select>
-              </div>
-              <div>
-                <label>{fo.type === "flat" ? "Flat amount ₹" : "Discount %"}</label>
-                <input type="number" value={fo.value ?? 0} onChange={(e) => setFO("value", e.target.value)} />
-              </div>
-            </div>
-            <div className="row">
-              <div><label>Min order ₹ (0 = none)</label><input type="number" value={fo.min_order ?? 0} onChange={(e) => setFO("min_order", e.target.value)} /></div>
-              <div><label>Max discount ₹ (percent cap, 0 = none)</label><input type="number" value={fo.max_discount ?? 0} onChange={(e) => setFO("max_discount", e.target.value)} disabled={fo.type === "flat"} /></div>
-            </div>
-            <p className="muted" style={{ marginTop: 4 }}>
-              Example: {fo.type === "flat" ? `flat ₹${Number(fo.value || 0)} off` : `${Number(fo.value || 0)}% off${Number(fo.max_discount) > 0 ? ` up to ₹${Number(fo.max_discount)}` : ""}`} on the first order{Number(fo.min_order) > 0 ? `, for carts of ₹${Number(fo.min_order)}+` : ""}.
-            </p>
-          </>
-        )}
       </div>
 
       <div className="card">
