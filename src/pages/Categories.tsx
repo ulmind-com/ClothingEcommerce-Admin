@@ -11,9 +11,20 @@ export default function Categories() {
   const [topName, setTopName] = useState("");
   const [topImg, setTopImg] = useState("");
   const [busy, setBusy] = useState(false);
+  const [scales, setScales] = useState<Record<string, number>>({}); // percent per category
 
-  const load = () => api.get("/categories/tree").then(setTree).catch(() => {});
+  const load = () =>
+    api.get<any[]>("/categories/tree").then((t) => {
+      setTree(t);
+      const sc: Record<string, number> = {};
+      (t || []).forEach((c) => { sc[c.id] = Math.round((c.image_scale || 1) * 100); });
+      setScales(sc);
+    }).catch(() => {});
   useEffect(() => { load(); }, []);
+
+  const saveScale = (id: string, pct: number) => {
+    api.patch(`/categories/${id}`, { image_scale: pct / 100 }).catch(() => {});
+  };
 
   // Upload a file and hand back its URL.
   const upload = async (file: File | undefined, cb: (url: string) => void) => {
@@ -74,6 +85,29 @@ export default function Categories() {
             <div className="flex">
               <button className="btn ghost sm" onClick={() => addSub(c.id)}>+ Sub-category</button>
               <button className="btn danger sm" onClick={() => del(c.id, c.name)}>Delete</button>
+            </div>
+          </div>
+
+          {/* Home pill image size — live preview + slider */}
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 20, marginTop: 14 }}>
+            <div style={{ position: "relative", width: 160, height: 46, background: "#fff", border: "1px solid var(--border)", borderRadius: 23, display: "flex", alignItems: "center", paddingLeft: 58, boxShadow: "0 2px 8px rgba(0,0,0,.08)", flex: "0 0 auto" }}>
+              <img
+                src={c.image || "https://via.placeholder.com/50?text=?"}
+                style={{ position: "absolute", left: 6, bottom: 0, height: 62 * ((scales[c.id] ?? 100) / 100), width: 54 * ((scales[c.id] ?? 100) / 100), objectFit: "contain" }}
+              />
+              <span style={{ fontWeight: 600, fontSize: 14 }}>{c.name}</span>
+            </div>
+            <div style={{ flex: 1 }}>
+              <label>Home image size — {scales[c.id] ?? 100}%</label>
+              <input
+                type="range" min={70} max={170} step={5}
+                value={scales[c.id] ?? 100}
+                onChange={(e) => setScales((s) => ({ ...s, [c.id]: Number(e.target.value) }))}
+                onMouseUp={() => saveScale(c.id, scales[c.id] ?? 100)}
+                onTouchEnd={() => saveScale(c.id, scales[c.id] ?? 100)}
+                style={{ width: "100%" }}
+              />
+              <p className="muted" style={{ marginTop: 2 }}>Drag to resize how this category's image shows on the app home.</p>
             </div>
           </div>
           {c.children?.length > 0 && (
