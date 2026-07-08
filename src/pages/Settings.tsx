@@ -10,6 +10,7 @@ export default function Settings() {
   const [mapSearch, setMapSearch] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
+  const [cancelUnit, setCancelUnit] = useState<"hours" | "days">("hours");
 
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMap = useRef<any>(null);
@@ -134,6 +135,7 @@ export default function Settings() {
     try {
       const body = {
         currency: s.currency, currency_code: s.currency_code,
+        cancel_window_hours: Number(s.cancel_window_hours ?? 24),
         shop: {
           ...s.shop,
           lat: s.shop.lat === "" ? null : Number(s.shop.lat),
@@ -161,6 +163,28 @@ export default function Settings() {
           <div><label>Currency code</label><input value={s.currency_code} onChange={(e) => set("currency_code", e.target.value)} /></div>
         </div>
         <p className="muted" style={{ marginTop: 4 }}>GST is set per product (CGST / SGST / IGST) in the product editor.</p>
+
+        <div className="row" style={{ marginTop: 4 }}>
+          <div>
+            <label>Order cancellation window</label>
+            <input
+              type="number"
+              min={0}
+              value={cancelUnit === "days" ? Number(s.cancel_window_hours ?? 24) / 24 : Number(s.cancel_window_hours ?? 24)}
+              onChange={(e) => set("cancel_window_hours", (Number(e.target.value) || 0) * (cancelUnit === "days" ? 24 : 1))}
+            />
+          </div>
+          <div>
+            <label>Unit</label>
+            <select value={cancelUnit} onChange={(e) => setCancelUnit(e.target.value as "hours" | "days")}>
+              <option value="hours">Hours</option>
+              <option value="days">Days</option>
+            </select>
+          </div>
+        </div>
+        <p className="muted" style={{ marginTop: 4 }}>
+          Customers can cancel an order within this time of placing it (before it ships). Set to 0 to disable cancellation. Currently: {Number(s.cancel_window_hours ?? 24) === 0 ? "disabled" : `${Number(s.cancel_window_hours ?? 24)} hour(s)`}.
+        </p>
       </div>
 
       <div className="card">
