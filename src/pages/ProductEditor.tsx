@@ -18,6 +18,7 @@ const empty = {
   images: [] as string[], colors: [] as Variant[], sizes: [] as string[],
   stock: 0, low_stock_threshold: 5,
   rating: 0, review_count: 0, sold_count: 0, is_active: true,
+  returnable: true, return_days: 0,
 };
 
 export default function ProductEditor() {
@@ -286,6 +287,21 @@ export default function ProductEditor() {
           counted automatically when orders are delivered. These update on their own.
           See the Reviews tab for all customer feedback.
         </p>
+        <div className="row" style={{ marginTop: 16 }}>
+          <div>
+            <label className="flex">
+              <input type="checkbox" style={{ width: "auto" }} checked={f.returnable} onChange={(e) => set("returnable", e.target.checked)} />
+              Return / refund available
+            </label>
+          </div>
+          {f.returnable && (
+            <div><label>Return window (days · 0 = store default)</label><input type="number" min={0} value={f.return_days} onChange={(e) => set("return_days", Number(e.target.value) || 0)} /></div>
+          )}
+        </div>
+        <p className="muted" style={{ marginTop: 4 }}>
+          If off, customers can't return/refund this product — the app shows your support phone (from Settings) instead.
+        </p>
+
         <label className="flex" style={{ marginTop: 16 }}>
           <input type="checkbox" style={{ width: "auto" }} checked={f.is_active} onChange={(e) => set("is_active", e.target.checked)} />
           Visible in store
