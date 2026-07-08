@@ -206,6 +206,7 @@ export default function Settings() {
         <div className="row">
           <div style={{ flex: 2 }}><label>Shop name</label><input value={s.shop.name || ""} onChange={(e) => setShop("name", e.target.value)} /></div>
           <div style={{ flex: 1 }}><label>Phone number</label><input type="tel" value={s.shop.phone || ""} placeholder="+91 XXXXX XXXXX" onChange={(e) => setShop("phone", e.target.value)} /></div>
+          <div style={{ flex: 1 }}><label>Support email</label><input type="email" value={s.shop.email || ""} placeholder="support@store.com" onChange={(e) => setShop("email", e.target.value)} /></div>
         </div>
 
         <div className="row">
