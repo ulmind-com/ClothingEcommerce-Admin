@@ -8,6 +8,7 @@ const links = [
   { to: "/banners", label: "Banners / Offers" },
   { to: "/home-layout", label: "Home Layout" },
   { to: "/coupons", label: "Coupons" },
+  { to: "/notifications", label: "Notifications" },
   { to: "/orders", label: "Orders" },
   { to: "/reviews", label: "Reviews" },
   { to: "/settings", label: "Settings" },
