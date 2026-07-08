@@ -136,6 +136,7 @@ export default function Settings() {
       const body = {
         currency: s.currency, currency_code: s.currency_code,
         cancel_window_hours: Number(s.cancel_window_hours ?? 24),
+        return_window_days: Number(s.return_window_days ?? 7),
         shop: {
           ...s.shop,
           lat: s.shop.lat === "" ? null : Number(s.shop.lat),
@@ -184,6 +185,17 @@ export default function Settings() {
         </div>
         <p className="muted" style={{ marginTop: 4 }}>
           Customers can cancel an order within this time of placing it (before it ships). Set to 0 to disable cancellation. Currently: {Number(s.cancel_window_hours ?? 24) === 0 ? "disabled" : `${Number(s.cancel_window_hours ?? 24)} hour(s)`}.
+        </p>
+
+        <div className="row" style={{ marginTop: 4 }}>
+          <div>
+            <label>Return / exchange window (days)</label>
+            <input type="number" min={0} value={Number(s.return_window_days ?? 7)} onChange={(e) => set("return_window_days", Number(e.target.value) || 0)} />
+          </div>
+          <div style={{ flex: 1 }} />
+        </div>
+        <p className="muted" style={{ marginTop: 4 }}>
+          Customers can request a return/exchange within this many days of delivery. Set to 0 to disable returns.
         </p>
       </div>
 

@@ -11,6 +11,7 @@ const links = [
   { to: "/notifications", label: "Notifications" },
   { to: "/orders", label: "Orders" },
   { to: "/refunds", label: "Refunds" },
+  { to: "/returns", label: "Returns" },
   { to: "/reviews", label: "Reviews" },
   { to: "/settings", label: "Settings" },
 ];
