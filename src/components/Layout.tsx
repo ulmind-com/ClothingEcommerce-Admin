@@ -10,6 +10,7 @@ const links = [
   { to: "/coupons", label: "Coupons" },
   { to: "/notifications", label: "Notifications" },
   { to: "/orders", label: "Orders" },
+  { to: "/users", label: "Users" },
   { to: "/refunds", label: "Refunds" },
   { to: "/returns", label: "Returns" },
   { to: "/reviews", label: "Reviews" },

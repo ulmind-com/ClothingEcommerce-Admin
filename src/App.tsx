@@ -15,6 +15,7 @@ import Refunds from "./pages/Refunds";
 import Returns from "./pages/Returns";
 import Reviews from "./pages/Reviews";
 import Settings from "./pages/Settings";
+import Users from "./pages/Users";
 
 function Guard({ children }: { children: React.ReactNode }) {
   return isAdmin() ? <>{children}</> : <Navigate to="/login" replace />;
@@ -40,6 +41,7 @@ export default function App() {
         <Route path="/coupons" element={<Coupons />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/orders" element={<Orders />} />
+        <Route path="/users" element={<Users />} />
         <Route path="/refunds" element={<Refunds />} />
         <Route path="/returns" element={<Returns />} />
         <Route path="/home-layout" element={<HomeLayout />} />
