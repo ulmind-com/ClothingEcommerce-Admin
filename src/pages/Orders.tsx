@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
+import PaymentInfo from "../components/PaymentInfo";
 
 const STAGES = ["placed", "confirmed", "shipped", "out_for_delivery", "delivered", "cancelled"];
 const label = (s: string) => s.replace(/_/g, " ");
@@ -60,6 +61,9 @@ export default function Orders() {
                         </table>
                         <div className="muted" style={{ marginTop: 8 }}>
                           Subtotal ₹{o.subtotal} · Discount ₹{o.discount} · Delivery ₹{o.delivery} · Tax ₹{o.tax} · <b>Total ₹{o.amount}</b>
+                        </div>
+                        <div style={{ marginTop: 14 }}>
+                          <PaymentInfo o={o} orderId={o.id} />
                         </div>
                       </div>
                     </td>

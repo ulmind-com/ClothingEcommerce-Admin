@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
+import PaymentInfo from "../components/PaymentInfo";
 
 const STATUSES = ["requested", "approved", "rejected", "picked_up", "refunded", "exchanged"];
 const label = (s: string) => s.replace(/_/g, " ");
@@ -17,6 +18,7 @@ export default function Returns() {
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
+  const [open, setOpen] = useState<string | null>(null);
   const [err, setErr] = useState("");
 
   const load = () =>
@@ -45,45 +47,69 @@ export default function Returns() {
       <div className="card">
         <table>
           <thead>
-            <tr><th>Order</th><th>Type</th><th>Items</th><th>Amount</th><th>Reason</th><th>Status</th><th>Refund</th></tr>
+            <tr><th>Order</th><th>Type</th><th>Items</th><th>Amount</th><th>Reason</th><th>Status</th><th>Refund</th><th></th></tr>
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.id}>
-                <td>
-                  <b>#{r.order_short}</b>
-                  <div className="muted">{new Date(r.created_at).toLocaleDateString()}</div>
-                </td>
-                <td><span className="pill" style={{ background: "#f1f1f4" }}>{r.type}</span></td>
-                <td style={{ maxWidth: 240 }}>
-                  {(r.items || []).map((it: any, i: number) => (
-                    <div key={i} style={{ fontSize: 13 }}>
-                      {it.title} <span className="muted">×{it.qty}{it.size ? ` · ${it.size}` : ""}{it.color ? ` · ${it.color}` : ""}</span>
-                    </div>
-                  ))}
-                </td>
-                <td><b>{money(r.amount)}</b></td>
-                <td style={{ maxWidth: 200, fontSize: 13 }}>
-                  {r.reason || <span className="muted">—</span>}
-                  {r.note && <div className="muted">Note: {r.note}</div>}
-                </td>
-                <td>
-                  <select
-                    value={r.status}
-                    disabled={busy === r.id}
-                    onChange={(e) => patch(r.id, { status: e.target.value })}
-                    style={{ background: statusColor[r.status]?.bg, color: statusColor[r.status]?.fg, fontWeight: 600 }}
-                  >
-                    {STATUSES.map((s) => <option key={s} value={s}>{label(s)}</option>)}
-                  </select>
-                </td>
-                <td className="muted" style={{ fontSize: 12 }}>
-                  {r.refund_status ? `${r.refund_status}${r.refund_id ? ` · ${r.refund_id}` : ""}` : (r.type === "refund" ? "—" : "n/a")}
-                </td>
-              </tr>
+              <>
+                <tr key={r.id}>
+                  <td>
+                    <b>#{r.order_short}</b>
+                    <div className="muted">{new Date(r.created_at).toLocaleDateString()}</div>
+                  </td>
+                  <td><span className="pill" style={{ background: "#f1f1f4" }}>{r.type}</span></td>
+                  <td style={{ maxWidth: 240 }}>
+                    {(r.items || []).map((it: any, i: number) => (
+                      <div key={i} style={{ fontSize: 13 }}>
+                        {it.title} <span className="muted">×{it.qty}{it.size ? ` · ${it.size}` : ""}{it.color ? ` · ${it.color}` : ""}</span>
+                      </div>
+                    ))}
+                  </td>
+                  <td><b>{money(r.amount)}</b></td>
+                  <td style={{ maxWidth: 200, fontSize: 13 }}>
+                    {r.reason || <span className="muted">—</span>}
+                    {r.note && <div className="muted">Note: {r.note}</div>}
+                  </td>
+                  <td>
+                    <select
+                      value={r.status}
+                      disabled={busy === r.id}
+                      onChange={(e) => patch(r.id, { status: e.target.value })}
+                      style={{ background: statusColor[r.status]?.bg, color: statusColor[r.status]?.fg, fontWeight: 600 }}
+                    >
+                      {STATUSES.map((s) => <option key={s} value={s}>{label(s)}</option>)}
+                    </select>
+                  </td>
+                  <td className="muted" style={{ fontSize: 12 }}>
+                    {r.refund_status ? `${r.refund_status}${r.refund_id ? ` · ${r.refund_id}` : ""}` : (r.type === "refund" ? "—" : "n/a")}
+                  </td>
+                  <td>
+                    <button className="btn ghost sm" onClick={() => setOpen(open === r.id ? null : r.id)}>
+                      {open === r.id ? "Hide" : "View"}
+                    </button>
+                  </td>
+                </tr>
+                {open === r.id && (
+                  <tr key={r.id + "d"}>
+                    <td colSpan={8} style={{ background: "#faf9f8" }}>
+                      <div style={{ padding: "6px 4px" }}>
+                        <b>Customer:</b> {r.address?.name || "—"}
+                        {r.address?.phone && <span className="muted"> · {r.address.phone}</span>}
+                        <div className="muted" style={{ marginTop: 4 }}>
+                          Returned amount {money(r.amount)}
+                          {r.order_amount != null && <> · Order total ₹{r.order_amount}</>}
+                        </div>
+                        <div style={{ marginTop: 14 }}>
+                          <PaymentInfo o={r} orderId={r.order_id} />
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </>
             ))}
-            {!loading && rows.length === 0 && <tr><td colSpan={7} className="muted">No return requests yet.</td></tr>}
-            {loading && <tr><td colSpan={7} className="muted">Loading…</td></tr>}
+            {!loading && rows.length === 0 && <tr><td colSpan={8} className="muted">No return requests yet.</td></tr>}
+            {loading && <tr><td colSpan={8} className="muted">Loading…</td></tr>}
           </tbody>
         </table>
       </div>
