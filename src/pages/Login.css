@@ -1,0 +1,130 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+/* Cute lamp login — scoped to .lamp-login so it can't leak into the admin shell */
+.lamp-login {
+  --theme-color: #2a2c30;
+  --theme-glow-rgb: 42, 44, 48;
+  --shade-color: #2c2c2c;
+  --bulb-color: #1a1a1a;
+  --light-opacity: 0;
+  --btn-bg: #2a2c30;
+  --btn-text-color: #888;
+
+  position: fixed;
+  inset: 0;
+  background: #0b0f14;
+  color: #fff;
+  font-family: 'Poppins', system-ui, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+}
+
+.lamp-login .container {
+  display: flex;
+  width: 100%;
+  max-width: 1100px;
+  height: 600px;
+  padding: 2rem;
+  gap: 2rem;
+}
+
+.lamp-login .lamp-section {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  user-select: none;
+}
+
+.lamp-login .lamp-svg {
+  width: 100%;
+  max-width: 350px;
+  height: auto;
+  overflow: visible;
+  filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.5));
+}
+
+.lamp-login .shade-main { fill: var(--shade-color); transition: fill .7s cubic-bezier(.4, 0, .2, 1); }
+.lamp-login .shade-inner { fill: var(--bulb-color); transition: fill .7s cubic-bezier(.4, 0, .2, 1); }
+.lamp-login .light-cone { opacity: var(--light-opacity); transition: opacity .7s cubic-bezier(.4, 0, .2, 1); }
+.lamp-login .face-sleep,
+.lamp-login .face-awake { transition: opacity .45s ease; }
+
+.lamp-login .pull-string-group { cursor: grab; touch-action: none; }
+.lamp-login .pull-string-group.dragging { cursor: grabbing; }
+.lamp-login .pull-string-group .string-handle { transition: stroke .25s ease; }
+.lamp-login .pull-string-group:hover .string-handle,
+.lamp-login .pull-string-group.dragging .string-handle { stroke: #fff; }
+
+.lamp-login .lamp-ambient-glow {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(var(--theme-glow-rgb), .15) 0%, transparent 70%);
+  transition: background .6s ease;
+  pointer-events: none;
+}
+
+.lamp-login .login-section { flex: 1; display: flex; align-items: center; justify-content: center; }
+
+.lamp-login .login-card {
+  width: 100%;
+  max-width: 400px;
+  background: rgba(18, 24, 32, .6);
+  backdrop-filter: blur(12px);
+  padding: 3rem 2.5rem;
+  border-radius: 20px;
+  border: 2px solid var(--theme-color);
+  box-shadow: 0 0 30px rgba(var(--theme-glow-rgb), .15), inset 0 0 15px rgba(255, 255, 255, .02);
+  transition: border-color .6s ease, box-shadow .6s ease;
+}
+
+.lamp-login .login-card h2 { font-size: 2rem; font-weight: 600; text-align: center; margin: 0; }
+.lamp-login .login-card .sub { text-align: center; color: #8b98a5; font-size: .85rem; margin: .4rem 0 2rem; }
+
+.lamp-login .input-group { margin-bottom: 1.5rem; display: flex; flex-direction: column; }
+.lamp-login .input-group label { font-size: .85rem; color: #a0a0a0; margin: 0 0 .5rem; font-weight: 500; }
+.lamp-login .input-group input {
+  background: #151a21;
+  border: 1px solid #2a2c30;
+  padding: 1rem 1.2rem;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 14px;
+  outline: none;
+  transition: border-color .3s ease, box-shadow .3s ease;
+}
+.lamp-login .input-group input:focus {
+  border-color: var(--theme-color);
+  box-shadow: 0 0 10px rgba(var(--theme-glow-rgb), .3);
+}
+
+.lamp-login .login-btn {
+  width: 100%;
+  padding: 1rem;
+  border: none;
+  border-radius: 10px;
+  background: var(--btn-bg);
+  color: var(--btn-text-color);
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: all .4s ease;
+}
+.lamp-login .login-btn:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-2px); }
+.lamp-login .login-btn:disabled { opacity: .6; cursor: default; }
+
+.lamp-login .err { color: #f87171; font-size: 13px; margin-top: 8px; text-align: center; }
+
+@media (max-width: 768px) {
+  .lamp-login .container { flex-direction: column; height: auto; padding: 1.5rem; }
+  .lamp-login .lamp-svg { max-width: 250px; }
+}

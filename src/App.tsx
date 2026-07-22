@@ -7,6 +7,7 @@ import Coupons from "./pages/Coupons";
 import Dashboard from "./pages/Dashboard";
 import HomeLayout from "./pages/HomeLayout";
 import Login from "./pages/Login";
+import Media from "./pages/Media";
 import Notifications from "./pages/Notifications";
 import Orders from "./pages/Orders";
 import ProductEditor from "./pages/ProductEditor";
@@ -45,6 +46,7 @@ export default function App() {
         <Route path="/refunds" element={<Refunds />} />
         <Route path="/returns" element={<Returns />} />
         <Route path="/home-layout" element={<HomeLayout />} />
+        <Route path="/media" element={<Media />} />
         <Route path="/reviews" element={<Reviews />} />
         <Route path="/settings" element={<Settings />} />
       </Route>

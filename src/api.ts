@@ -38,3 +38,24 @@ export async function uploadImage(file: File): Promise<string> {
   if (!res.ok) throw new Error(data?.detail || "Upload failed");
   return data.url as string;
 }
+
+export interface UploadedVideo {
+  url: string;
+  poster: string | null;
+  duration?: number;
+  bytes?: number;
+}
+
+/** Clips go through Cloudinary's video pipeline and come back with a poster. */
+export async function uploadVideo(file: File): Promise<UploadedVideo> {
+  const form = new FormData();
+  form.append("file", file);
+  const res = await fetch(`${API_URL}/upload/video`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${getToken()}` },
+    body: form,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.detail || "Upload failed");
+  return data as UploadedVideo;
+}
